@@ -28,12 +28,10 @@ public class PebbleGame {
     }
 
     class Bag {
-        public int drawStone(){
+        public void drawStone(){
             //TODO if bag has stones remaining draw one and return it
 
             //TODO otherwise draw all stones from corresponding white bag
-            int stone = 0;
-            return stone;
         }
     }
 }
