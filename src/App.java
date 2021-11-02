@@ -1,5 +1,7 @@
 public class App {
     public static void main(String[] args) throws Exception {
-        System.out.println("Hello, World!");
+        PebbleGame game = new PebbleGame();
+        game.init();
+        game.run();
     }
 }
