@@ -1,37 +1,158 @@
 import java.util.ArrayList;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.InputStreamReader;
+import java.util.Random;
 
 public class PebbleGame {
 
-    Bag [] bags;
+    volatile Bag [] bags = new Bag[6];
     Player [] players;
+    int playerCount;
 
     public void init(){
         //TODO get amount of players as input from the player
+        System.out.println("Welcome to the pebble game!");
+        System.out.println("Please enter the number of players:");
+        InputStreamReader inputreader = new InputStreamReader(System.in);
+        BufferedReader reader = new BufferedReader(inputreader);
+
+        try{
+            playerCount = Integer.parseInt(reader.readLine());
+            if ( playerCount < 1) {
+                throw new Exception(
+                "illeagal number of players: player number must be positive"
+                );
+            }
+
+            players = new Player[playerCount];
+        }
+        catch (Exception e){
+            return;
+        }
+
+
 
         //TODO get the location of the weights for the bags
 
-        //TODO initialise the bags (both white and black)
+        for (int i = 0; i< 3; i++){
 
-        //TODO assign the bags their respective weights
+            boolean validInput = false;
+            File weightFile = null;
+
+            do{
+                System.out.println(
+                    String.format("Please enter location of bag number %d to load", i+1) 
+                );
+
+                try{
+                    String input = reader.readLine();
+
+                    if (input.equals("e") || input.equals("E")) return;
+
+                    weightFile = new File(input);
+
+                    if (weightFile.getAbsoluteFile().exists()){
+                        validInput = true;
+                    }
+                    else{
+                        System.out.println("file does not exist, please check the formatting");
+                    }
+
+                } catch (Exception e){
+                    System.out.println("invalid file");
+                }
+
+            } while (validInput == false);
+
+            try {
+                bags[i] = new Bag(weightFile, i);
+            } catch (Exception e){
+                System.out.println(e.getMessage());
+                return;
+            }
+            bags[i+3] = new Bag(i + 3);
+
+        }
 
         //TODO initialise the players (as threads)
 
-        //TODO set the players starting hands from the bags
+        Random rand = new Random();
+
+        for (int i = 0; i < playerCount; i++){
+            String dir = System.getProperty("user.dir");
+            dir += String.format("\\out\\player%d_output.txt", i);
+            File outputFile = new File(dir);
+            try{
+                outputFile.createNewFile();
+                players[i] = new Player(outputFile, i);
+                players[i].drawHand(bags[rand.nextInt(3)]);
+            } catch (Exception e){
+                System.out.println(dir);
+                System.out.println(e.getMessage());
+                return;
+            }
+        }
+
     }
 
     public void run(){
-        //TODO run player threads and start the game
+        for (Player p : players){
+            p.start();
+        }
+
+        boolean threadsAreAlive = true;
+
+        while (threadsAreAlive){
+            threadsAreAlive = false;
+            for (Player p: players){
+                if (p.isAlive()){
+                    threadsAreAlive = true;
+                }
+            }
+        }
+
+        Player winner = null;
+
+        for (Player p : players){
+            if (p.isWinner()){
+                winner = p;
+            }
+        }
+
+        System.out.println("congratulations player " + winner.getIndex() + " you won! :)");
+
     }
 
-    class Player implements Runnable {
-        Stone [] hand;
+    class Player extends Thread {
+        Pebble [] hand = new Pebble[10];
+        Random rand;
+        File outputFile;
+        BufferedWriter writer;
+        FileWriter fwriter;
+        int index;
+        boolean hasWon;
 
-        public Player(){
-
+        public Player(File outputFile, int index) throws Exception{
+            rand = new Random();
+            this.outputFile = outputFile;
+            try{
+                fwriter = new FileWriter(outputFile);
+                writer = new BufferedWriter(fwriter);
+            } catch (Exception e){
+                throw new Exception("couldnt create fileWriter");
+            }
+            this.index = index;
         }
 
         public void drawHand(Bag bag){
             //TODO implement a method to draw a full hand from a bag
+            for (int i = 0 ; i < 10 ; i++){
+                hand[i] = bag.takePebble();
+            }
             //bag here is passed as a pointer
         }
 
@@ -47,15 +168,84 @@ public class PebbleGame {
 
         private boolean hasWon(){
             //TODO check if the hand is at the 100 total value to win
-            //otherwise continue
+            int total = 0;
+            for (Pebble p : hand){
+                if (p == null){
+                    return false;
+                }
+                total += p.getValue();
+            }
+            if (total == 100) { return true; }
             return false;
+        }
+
+        public int getIndex(){
+            return index;
         }
 
         @Override
         public void run(){
             //TODO if player hand is equal to 100 intterupt all other player threads
-            
+            while (!Thread.interrupted()){
+                System.out.println(index);
+                if(hasWon()) {
+                    for (Player p : players){
+                        p.interrupt();
+                        hasWon = true;
+                    }
+                    return;
+                }
+
+                int freeSpace = rand.nextInt(10);
+                Pebble pToDiscard = hand[freeSpace];
+                Bag discardTo = bags[rand.nextInt(3) + 3];
+                
+                discardTo.addPebble(pToDiscard);
+
+                hand[freeSpace] = new Pebble(-1);
+                Pebble [] oldHand = hand.clone();
+
+                boolean drawn = false;
+                Bag drawnFrom;
+                Pebble newPebble;
+                do{
+                    drawnFrom = bags[rand.nextInt(3)];
+                    newPebble = drawnFrom.takePebble();
+                    if (newPebble != null){
+                        hand[freeSpace] = newPebble;
+                        drawn = true;
+                    }
+                } while (drawn == false);
+
+                //print out to the file
+                try{
+                    writer.append(
+                        "Player has discarded a " + pToDiscard.getValue() + " to bag " + discardTo.getChar() + "\n" +
+                        "Player hand is " + handToString(oldHand) + "\n" +
+                        "Player has drawn a " + newPebble.getValue() + " from bag " + drawnFrom.getChar() + "\n" +
+                        "Player hand is " + handToString(hand) + "\n"
+                    );
+                } catch (Exception e){
+
+                }
+
+
+            }
             //TODO otherwise discard one random pebble and draw from a black bag
+        }
+
+        public boolean isWinner(){
+            return hasWon;
+        }
+
+        private String handToString(Pebble [] hand){
+            String toAppend = "[";
+            for(Pebble i : hand){
+                if (i.getValue() != -1){
+                    toAppend += i.getValue() + ",";
+                }
+            } 
+            return toAppend + "]";
         }
     }
 
@@ -65,33 +255,120 @@ public class PebbleGame {
         //access the bag at any given time, this is to ensure that players are not
         //operating on stale data
 
-        ArrayList<Stone> stones;
+        ArrayList<Pebble> pebbles;
+        int [] weights;
+        int index;
 
-        public Bag(){
+
+        public Bag(File weightFile, int index) throws Exception{
             //initialize a new arraylist of stones
-            stones = new ArrayList<Stone>();
+
+            this.index = index;
+
+            FileReader fileReader;
+            BufferedReader reader;
+            try{
+                fileReader = new FileReader(weightFile);
+                reader = new BufferedReader(fileReader);
+
+                String weightString = reader.readLine();
+
+                String [] weightStringArr = weightString.split(",");
+
+                weights = new int[weightStringArr.length];
+
+                for (int i =0; i < weights.length; i++){
+                    weights[i] = Integer.parseInt(weightStringArr[i]);
+                    if (weights[i] < 1){
+                        throw new Exception("weights must be strictly positive integers");
+                    }
+                }
+                reader.close();
+            }
+            catch (Exception e){
+
+            }
+
+            pebbles = new ArrayList<Pebble>();
+
+            Random rand = new Random();
+
+            for (int i = 0; i < playerCount * 11; i ++){
+                Pebble newPebble = new Pebble(weights[rand.nextInt(weights.length)]);
+                pebbles.add(newPebble);
+            }
+
+
         }
 
-        public void takeStone(){
+        public Bag(int index){
+            pebbles = new ArrayList<Pebble>();
+            this.index = index;
+        }
+
+        public char getChar(){
+            char returnChar;
+            switch(index){
+                case 0:
+                    returnChar = 'X';
+                    break;
+                case 1:
+                    returnChar = 'Y';
+                    break;
+                case 2:
+                    returnChar = 'Z';
+                    break;
+                case 3:
+                    returnChar = 'A';
+                    break;
+                case 4:
+                    returnChar = 'B';
+                    break;
+                case 5:
+                    returnChar = 'C';
+                    break;
+                default:
+                    returnChar = '!';
+                    break;
+            }
+            return returnChar;
+        }
+
+        public synchronized Pebble takePebble(){
             //TODO if bag has stones remaining draw one and return it
+            if (pebbles.isEmpty()){
+                bags[index + 3].transferPebbles(this);
+                return null;
+            }
+            Random rand = new Random();
+            Pebble p = pebbles.get(rand.nextInt(pebbles.size()));
+            pebbles.remove(p);
+            return p;
 
             //TODO otherwise draw all stones from corresponding white bag
         }
 
-        public void addStone(Stone stone){
+        public synchronized void addPebble(Pebble pebble){
             //TODO add the stone that is passed into the method to the list of stones
+            pebbles.add(pebble);
             //be careful here because the stone is passed in via pointer so make
         }
 
-        public void transferStones(Bag bag){
+        public synchronized void transferPebbles(Bag bag){
             //TODO move all the stones in this bag to a bag passed in through the arguments
+            bag.fill(pebbles);
+            pebbles = new ArrayList<Pebble>();
+        }
+
+        public synchronized void fill(ArrayList<Pebble> pebbles){
+            this.pebbles = pebbles;
         }
     }
 
-    class Stone {
+    class Pebble {
         final int value;
 
-        public Stone(int value){
+        public Pebble(int value){
             this.value = value;
         }
 
