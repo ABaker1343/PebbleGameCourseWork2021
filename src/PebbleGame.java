@@ -12,6 +12,7 @@ public class PebbleGame {
     volatile Bag [] bags = new Bag[6];
     Player [] players;
     int playerCount;
+    volatile Player winner;
 
     public void init(){
         //TODO get amount of players as input from the player
@@ -115,8 +116,6 @@ public class PebbleGame {
             }
         }
 
-        Player winner = null;
-
         for (Player p : players){
             if (p.isWinner()){
                 winner = p;
@@ -124,6 +123,12 @@ public class PebbleGame {
         }
 
         System.out.println("congratulations player " + winner.getIndex() + " you won! :)");
+
+        try{
+            wait(5000);
+        } catch (Exception e){
+            System.out.println(e.getMessage());
+        }
 
     }
 
@@ -186,12 +191,20 @@ public class PebbleGame {
         @Override
         public void run(){
             //TODO if player hand is equal to 100 intterupt all other player threads
-            while (!Thread.interrupted()){
+            //while (!Thread.interrupted()){
+            while(winner == null){
                 System.out.println(index);
                 if(hasWon()) {
                     for (Player p : players){
-                        p.interrupt();
+                        //p.interrupt();
+                        winner = this;
                         hasWon = true;
+                        try{
+                            Thread.sleep(200);
+                        } catch (Exception e){
+                            System.out.println(e.getMessage());
+                        }
+                        break;
                     }
                     return;
                 }
@@ -226,10 +239,14 @@ public class PebbleGame {
                         "Player hand is " + handToString(hand) + "\n"
                     );
                 } catch (Exception e){
-
+                    System.out.println(e.getMessage());
                 }
 
-
+            }
+            try{
+                writer.close();
+            } catch (Exception e){
+                System.out.println(e.getMessage());
             }
             //TODO otherwise discard one random pebble and draw from a black bag
         }
@@ -249,7 +266,7 @@ public class PebbleGame {
         }
     }
 
-    class Bag {
+    public class Bag {
         
         //in the bag class we will have to make sure that only one player can
         //access the bag at any given time, this is to ensure that players are not
@@ -259,6 +276,20 @@ public class PebbleGame {
         int [] weights;
         int index;
 
+        public Bag(int [] weights, int index){
+            this.weights = weights;
+            this.index = index;
+
+            pebbles = new ArrayList<Pebble>();
+
+            Random rand = new Random();
+
+            for (int i = 0; i < playerCount * 11; i ++){
+                Pebble newPebble = new Pebble(weights[rand.nextInt(weights.length)]);
+                pebbles.add(newPebble);
+            }
+
+        }
 
         public Bag(File weightFile, int index) throws Exception{
             //initialize a new arraylist of stones
