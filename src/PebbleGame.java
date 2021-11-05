@@ -195,18 +195,8 @@ public class PebbleGame {
             while(winner == null){
                 System.out.println(index);
                 if(hasWon()) {
-                    for (Player p : players){
-                        //p.interrupt();
-                        winner = this;
-                        hasWon = true;
-                        try{
-                            Thread.sleep(200);
-                        } catch (Exception e){
-                            System.out.println(e.getMessage());
-                        }
-                        break;
-                    }
-                    return;
+                    winner = this;
+                    break;
                 }
 
                 int freeSpace = rand.nextInt(10);
@@ -296,12 +286,10 @@ public class PebbleGame {
 
             this.index = index;
 
-            FileReader fileReader;
-            BufferedReader reader;
+            FileReader fileReader= new FileReader(weightFile);
+            BufferedReader reader = new BufferedReader(fileReader);
+            
             try{
-                fileReader = new FileReader(weightFile);
-                reader = new BufferedReader(fileReader);
-
                 String weightString = reader.readLine();
 
                 String [] weightStringArr = weightString.split(",");
@@ -314,10 +302,12 @@ public class PebbleGame {
                         throw new Exception("weights must be strictly positive integers");
                     }
                 }
-                reader.close();
             }
             catch (Exception e){
 
+            }
+            finally{
+                reader.close();
             }
 
             pebbles = new ArrayList<Pebble>();
