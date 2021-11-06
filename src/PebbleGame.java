@@ -15,7 +15,7 @@ public class PebbleGame {
     volatile Player winner;
 
     public void init(){
-        //TODO get amount of players as input from the player
+        //get amount of players as input from the player
         System.out.println("Welcome to the pebble game!");
         System.out.println("Please enter the number of players:");
         InputStreamReader inputreader = new InputStreamReader(System.in);
@@ -35,9 +35,6 @@ public class PebbleGame {
             return;
         }
 
-
-
-        //TODO get the location of the weights for the bags
 
         for (int i = 0; i< 3; i++){
 
@@ -78,8 +75,6 @@ public class PebbleGame {
             bags[i+3] = new Bag(i + 3);
 
         }
-
-        //TODO initialise the players (as threads)
 
         Random rand = new Random();
 
@@ -154,25 +149,14 @@ public class PebbleGame {
         }
 
         public void drawHand(Bag bag){
-            //TODO implement a method to draw a full hand from a bag
+            //a method to draw a full hand from a bag
             for (int i = 0 ; i < 10 ; i++){
                 hand[i] = bag.takePebble();
             }
             //bag here is passed as a pointer
         }
 
-        public void drawStone(){
-            //TODO implement drawing one stone
-        }
-
-        public void discardStone(){
-            //TODO implement discarding a stone from the players hand
-            //this should be doable with pointers and the remove() function in ArrayLists
-            //if not can be done using indexs in the players hand
-        }
-
         private boolean hasWon(){
-            //TODO check if the hand is at the 100 total value to win
             int total = 0;
             for (Pebble p : hand){
                 if (p == null){
@@ -190,12 +174,10 @@ public class PebbleGame {
 
         @Override
         public void run(){
-            //TODO if player hand is equal to 100 intterupt all other player threads
-            //while (!Thread.interrupted()){
             while(winner == null){
                 System.out.println(index);
                 if(hasWon()) {
-                    winner = this;
+                    if (winner == null) { winner = this; }
                     break;
                 }
 
@@ -238,7 +220,6 @@ public class PebbleGame {
             } catch (Exception e){
                 System.out.println(e.getMessage());
             }
-            //TODO otherwise discard one random pebble and draw from a black bag
         }
 
         public boolean isWinner(){
@@ -356,7 +337,6 @@ public class PebbleGame {
         }
 
         public synchronized Pebble takePebble(){
-            //TODO if bag has stones remaining draw one and return it
             if (pebbles.isEmpty()){
                 bags[index + 3].transferPebbles(this);
                 return null;
@@ -366,17 +346,13 @@ public class PebbleGame {
             pebbles.remove(p);
             return p;
 
-            //TODO otherwise draw all stones from corresponding white bag
         }
 
         public synchronized void addPebble(Pebble pebble){
-            //TODO add the stone that is passed into the method to the list of stones
             pebbles.add(pebble);
-            //be careful here because the stone is passed in via pointer so make
         }
 
         public synchronized void transferPebbles(Bag bag){
-            //TODO move all the stones in this bag to a bag passed in through the arguments
             bag.fill(pebbles);
             pebbles = new ArrayList<Pebble>();
         }
@@ -395,6 +371,11 @@ public class PebbleGame {
 
         public int getValue(){
             return value;
+        }
+
+        public boolean equals(Pebble p) {
+            if (this.value == p.getValue()) {return true;}
+            return false;
         }
 
     }
