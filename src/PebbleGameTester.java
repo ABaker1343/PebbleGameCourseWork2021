@@ -1,7 +1,5 @@
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
 class PebbleGameTester {
 
     //class for testing to keep test code away from rest of the code

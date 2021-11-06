@@ -1,9 +1,10 @@
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.function.Consumer;
 
 public class BagTests extends PebbleGame {
     /**
@@ -48,5 +49,46 @@ public class BagTests extends PebbleGame {
 
         assertEquals(null, bags[0].takePebble());
 
+    }
+
+    @Test
+    public void testAddPebble(){
+        playerCount = 1;
+        bags[0] = new Bag(new int [] {1,2,3,4,5}, 0);
+        bags[3] = new Bag(3);
+        bags[1] = new Bag(new int [] {1,2,3,4,5}, 0);
+        bags[4] = new Bag(3);
+        bags[2] = new Bag(new int [] {1,2,3,4,5}, 0);
+        bags[5] = new Bag(3);
+        
+        Pebble p1 = new Pebble(1);
+
+        bags[3].addPebble(p1);
+
+        assertEquals(bags[3].pebbles.get(0), p1);
+
+        assertThrows(IndexOutOfBoundsException.class, () -> bags[3].pebbles.get(1));
+
+        Pebble p2 = new Pebble(2);
+        bags[3].addPebble(p2);
+        assertEquals(bags[3].pebbles.get(1), p2);
+    }
+
+    @Test
+    public void testTransferPebbles(){
+        playerCount = 1;
+        bags[0] = new Bag(new int [] {1,2,3,4,5}, 0);
+        bags[3] = new Bag(3);
+        bags[1] = new Bag(new int [] {1,2,3,4,5}, 0);
+        bags[4] = new Bag(3);
+        bags[2] = new Bag(new int [] {1,2,3,4,5}, 0);
+        bags[5] = new Bag(3);
+
+        ArrayList<Pebble> bagList = bags[0].pebbles;
+
+        bags[0].transferPebbles(bags[3]);
+
+        assertEquals(bags[3].pebbles, bagList);
+        assert bags[0].pebbles.isEmpty();
     }
 }

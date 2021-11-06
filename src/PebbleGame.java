@@ -357,7 +357,7 @@ public class PebbleGame {
             pebbles = new ArrayList<Pebble>();
         }
 
-        public synchronized void fill(ArrayList<Pebble> pebbles){
+        private synchronized void fill(ArrayList<Pebble> pebbles){
             this.pebbles = pebbles;
         }
     }
