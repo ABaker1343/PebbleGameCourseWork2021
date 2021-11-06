@@ -111,12 +111,6 @@ public class PebbleGame {
             }
         }
 
-        for (Player p : players){
-            if (p.isWinner()){
-                winner = p;
-            }
-        }
-
         System.out.println("congratulations player " + winner.getIndex() + " you won! :)");
 
         try{
@@ -134,16 +128,15 @@ public class PebbleGame {
         BufferedWriter writer;
         FileWriter fwriter;
         int index;
-        boolean hasWon;
 
         public Player(File outputFile, int index) throws Exception{
             rand = new Random();
             this.outputFile = outputFile;
             try{
-                fwriter = new FileWriter(outputFile);
+                fwriter = new FileWriter(this.outputFile);
                 writer = new BufferedWriter(fwriter);
             } catch (Exception e){
-                throw new Exception("couldnt create fileWriter");
+                throw e;
             }
             this.index = index;
         }
@@ -156,7 +149,7 @@ public class PebbleGame {
             //bag here is passed as a pointer
         }
 
-        private boolean hasWon(){
+        public boolean hasWon(){
             int total = 0;
             for (Pebble p : hand){
                 if (p == null){
@@ -222,10 +215,6 @@ public class PebbleGame {
             }
         }
 
-        public boolean isWinner(){
-            return hasWon;
-        }
-
         private String handToString(Pebble [] hand){
             String toAppend = "[";
             for(Pebble i : hand){
@@ -256,7 +245,7 @@ public class PebbleGame {
             Random rand = new Random();
 
             for (int i = 0; i < playerCount * 11; i ++){
-                Pebble newPebble = new Pebble(weights[rand.nextInt(weights.length)]);
+                Pebble newPebble = new Pebble(this.weights[rand.nextInt(this.weights.length)]);
                 pebbles.add(newPebble);
             }
 

@@ -91,4 +91,14 @@ public class BagTests extends PebbleGame {
         assertEquals(bags[3].pebbles, bagList);
         assert bags[0].pebbles.isEmpty();
     }
+
+    @Test
+    public void testPebbles(){
+        Pebble p1 = new Pebble(1);
+        Pebble p2 = new Pebble(1);
+        Pebble p3 = new Pebble(2);
+
+        assert p1.equals(p2);
+        assertEquals(2, p3.getValue());
+    }
 }
