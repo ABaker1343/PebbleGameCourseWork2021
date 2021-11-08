@@ -78,6 +78,11 @@ public class PebbleGame {
 
         Random rand = new Random();
 
+        if (!new File("/out").mkdir()){
+            System.out.println("could not make directory!");
+            return;
+        }
+
         for (int i = 0; i < playerCount; i++){
             String dir = System.getProperty("user.dir");
             dir += String.format("\\out\\player%d_output.txt", i);
