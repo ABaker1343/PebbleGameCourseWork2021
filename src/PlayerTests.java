@@ -16,7 +16,7 @@ public class PlayerTests extends PebbleGame {
         bags[5] = new Bag(3);
 
         Player p = null;
-        File outfile = new File("D:\\Code\\java\\Projects\\2021 software dev coursework repo\\PebbleGameCourseWork2021\\out\\test_outputs.txt");
+        File outfile = new File("Coursework_player_test_output.txt");
         try{
             outfile.createNewFile();
             p = new Player(outfile, 0);
