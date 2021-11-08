@@ -120,12 +120,7 @@ public class PebbleGame {
         }
 
         System.out.println("congratulations player " + winner.getIndex() + " you won! :)");
-
-        try{
-            wait(5000);
-        } catch (Exception e){
-            System.out.println(e.getMessage());
-        }
+        System.out.println(winner.handToString(winner.hand));
 
     }
 
