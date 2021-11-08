@@ -14,7 +14,7 @@ public class PebbleGame {
     int playerCount;
     volatile Player winner;
 
-    public void init(){
+    public void init() throws Exception{
         //get amount of players as input from the player
         System.out.println("Welcome to the pebble game!");
         System.out.println("Please enter the number of players:");
@@ -78,9 +78,12 @@ public class PebbleGame {
 
         Random rand = new Random();
 
-        if (!new File("/out").mkdir()){
-            System.out.println("could not make directory!");
-            return;
+        File outputDir = new File("/out");
+        if (!outputDir.exists()){
+            if (!outputDir.mkdir()){
+                System.out.println("could not make directory!");
+                throw new Exception("could not create dir");
+            }
         }
 
         for (int i = 0; i < playerCount; i++){
@@ -133,6 +136,7 @@ public class PebbleGame {
         BufferedWriter writer;
         FileWriter fwriter;
         int index;
+        Bag previousDrawBag = null;
 
         public Player(File outputFile, int index) throws Exception{
             rand = new Random();
@@ -151,6 +155,7 @@ public class PebbleGame {
             for (int i = 0 ; i < 10 ; i++){
                 hand[i] = bag.takePebble();
             }
+            previousDrawBag = bag;
             //bag here is passed as a pointer
         }
 
@@ -189,7 +194,7 @@ public class PebbleGame {
             }
         }
 
-        private void discardAndDrawPebbles(){
+        synchronized private void discardAndDrawPebbles(){
             int freeSpace = rand.nextInt(10);
             discardToBag(freeSpace);
             drawFromBag(freeSpace);
@@ -208,6 +213,8 @@ public class PebbleGame {
                 }
             } while (drawn == false);
 
+            previousDrawBag = drawnFrom;
+
             try{
                 writer.append(
                     "Player has drawn a " + newPebble.getValue() + " from bag " + drawnFrom.getChar() + "\n" +
@@ -220,7 +227,14 @@ public class PebbleGame {
 
         private void discardToBag(int slot){
             Pebble pToDiscard = hand[slot];
-            Bag discardTo = bags[rand.nextInt(3) + 3];
+            Bag discardTo = null;
+            //Bag discardTo = bags[rand.nextInt(3) + 3];
+            for (int i = 0; i < 3; i++){
+                if (bags[i] == previousDrawBag){
+                    discardTo = bags[i+3];
+                    break;
+                }
+            }
             
             discardTo.addPebble(pToDiscard);
 
