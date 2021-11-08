@@ -174,40 +174,9 @@ public class PebbleGame {
                     break;
                 }
 
-                int freeSpace = rand.nextInt(10);
-                Pebble pToDiscard = hand[freeSpace];
-                Bag discardTo = bags[rand.nextInt(3) + 3];
-                
-                discardTo.addPebble(pToDiscard);
-
-                hand[freeSpace] = new Pebble(-1);
-                Pebble [] oldHand = hand.clone();
-
-                boolean drawn = false;
-                Bag drawnFrom;
-                Pebble newPebble;
-                do{
-                    drawnFrom = bags[rand.nextInt(3)];
-                    newPebble = drawnFrom.takePebble();
-                    if (newPebble != null){
-                        hand[freeSpace] = newPebble;
-                        drawn = true;
-                    }
-                } while (drawn == false);
-
-                //print out to the file
-                try{
-                    writer.append(
-                        "Player has discarded a " + pToDiscard.getValue() + " to bag " + discardTo.getChar() + "\n" +
-                        "Player hand is " + handToString(oldHand) + "\n" +
-                        "Player has drawn a " + newPebble.getValue() + " from bag " + drawnFrom.getChar() + "\n" +
-                        "Player hand is " + handToString(hand) + "\n"
-                    );
-                } catch (Exception e){
-                    System.out.println(e.getMessage());
-                }
-
+                discardAndDrawPebbles();
             }
+
             try{
                 writer.close();
             } catch (Exception e){
@@ -215,10 +184,58 @@ public class PebbleGame {
             }
         }
 
+        private void discardAndDrawPebbles(){
+            int freeSpace = rand.nextInt(10);
+            discardToBag(freeSpace);
+            drawFromBag(freeSpace);
+        }
+
+        private void drawFromBag(int slot){
+            boolean drawn = false;
+            Bag drawnFrom;
+            Pebble newPebble;
+            do{
+                drawnFrom = bags[rand.nextInt(3)];
+                newPebble = drawnFrom.takePebble();
+                if (newPebble != null){
+                    hand[slot] = newPebble;
+                    drawn = true;
+                }
+            } while (drawn == false);
+
+            try{
+                writer.append(
+                    "Player has drawn a " + newPebble.getValue() + " from bag " + drawnFrom.getChar() + "\n" +
+                    "Player hand is " + handToString(hand) + "\n"
+                );
+            } catch (Exception e){
+                System.out.println(e.getMessage());
+            }
+        }
+
+        private void discardToBag(int slot){
+            Pebble pToDiscard = hand[slot];
+            Bag discardTo = bags[rand.nextInt(3) + 3];
+            
+            discardTo.addPebble(pToDiscard);
+
+            hand[slot] = null;
+
+            try{
+                writer.append(
+                    "Player has discarded a " + pToDiscard.getValue() + " to bag " + discardTo.getChar() + "\n" +
+                    "Player hand is " + handToString(hand) + "\n"
+                );
+            } catch (Exception e){
+                System.out.println(e.getMessage());
+            }
+
+        }
+
         private String handToString(Pebble [] hand){
             String toAppend = "[";
             for(Pebble i : hand){
-                if (i.getValue() != -1){
+                if (i != null){
                     toAppend += i.getValue() + ",";
                 }
             } 
