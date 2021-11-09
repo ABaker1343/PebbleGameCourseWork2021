@@ -14,6 +14,10 @@ public class PebbleGame {
     int playerCount;
     volatile Player winner;
 
+    /**
+     * method to initialise the Game objects and set up Bags and players
+     * @throws Exception
+     */
     public void init() throws Exception{
         //get amount of players as input from the player
         System.out.println("Welcome to the pebble game!");
@@ -35,12 +39,14 @@ public class PebbleGame {
             return;
         }
 
-
+        //get as input the file locations of the weights to use for each bag
+        //all files used during development are in the res/ folder
         for (int i = 0; i< 3; i++){
 
             boolean validInput = false;
             File weightFile = null;
 
+            //input bag location
             do{
                 System.out.println(
                     String.format("Please enter location of bag number %d to load", i+1) 
@@ -49,10 +55,12 @@ public class PebbleGame {
                 try{
                     String input = reader.readLine();
 
+                    //if e or E then quit
                     if (input.equals("e") || input.equals("E")) return;
 
                     weightFile = new File(input);
 
+                    //make sure the file exists
                     if (weightFile.getAbsoluteFile().exists()){
                         validInput = true;
                     }
@@ -66,18 +74,23 @@ public class PebbleGame {
 
             } while (validInput == false);
 
+            //instansiate a bag with the file given by the user
             try {
                 bags[i] = new Bag(weightFile, i);
             } catch (Exception e){
                 System.out.println(e.getMessage());
                 return;
             }
+
+            //create the corresponding empty white bag
             bags[i+3] = new Bag(i + 3);
 
         }
 
         Random rand = new Random();
 
+
+        //create the out directory if it doesnt exist
         File outputDir = new File("/out");
         if (!outputDir.exists()){
             if (!outputDir.mkdir()){
@@ -85,6 +98,8 @@ public class PebbleGame {
                 throw new Exception("could not create dir");
             }
         }
+
+        //for each player in the game create their output file and then construct the player
 
         for (int i = 0; i < playerCount; i++){
             String dir = System.getProperty("user.dir");
@@ -103,11 +118,18 @@ public class PebbleGame {
 
     }
 
+
+    /**
+     * this method will make the game run until a winner is declared
+     */
     public void run(){
         for (Player p : players){
             p.start();
         }
 
+        //make sure that all threads are dead before you move on
+        //if all threads are dead then all players are finished
+        //and a winnder is delcared
         boolean threadsAreAlive = true;
 
         while (threadsAreAlive){
@@ -119,11 +141,16 @@ public class PebbleGame {
             }
         }
 
+        //print the winner and their hand
         System.out.println("congratulations player " + winner.getIndex() + " you won! :)");
         System.out.println(winner.handToString(winner.hand));
 
     }
 
+
+    /**
+     * class for player extends Thread
+     */
     class Player extends Thread {
         Pebble [] hand = new Pebble[10];
         Random rand;
@@ -133,6 +160,14 @@ public class PebbleGame {
         int index;
         Bag previousDrawBag = null;
 
+        /**
+         * constructor for player
+         * 
+         * takes a file to output and an index to tell the player what number they are
+         * @param outputFile
+         * @param index
+         * @throws Exception
+         */
         public Player(File outputFile, int index) throws Exception{
             rand = new Random();
             this.outputFile = outputFile;
@@ -145,6 +180,10 @@ public class PebbleGame {
             this.index = index;
         }
 
+        /**
+         * a method to draw an entire hand from a given bag
+         * @param bag
+         */
         public void drawHand(Bag bag){
             //a method to draw a full hand from a bag
             for (int i = 0 ; i < 10 ; i++){
@@ -154,6 +193,12 @@ public class PebbleGame {
             //bag here is passed as a pointer
         }
 
+        /**
+         * method to check if the player has won
+         * 
+         * return true if player hand is equal to 100
+         * @return
+         */
         public boolean hasWon(){
             int total = 0;
             for (Pebble p : hand){
@@ -166,10 +211,19 @@ public class PebbleGame {
             return false;
         }
 
+        /**
+         * getter for index
+         * @return
+         */
         public int getIndex(){
             return index;
         }
 
+        /**
+         * run function, this function will be run on the player thread and contains
+         * the player logic
+         * its an override for the run function in the Thread class
+         */
         @Override
         public void run(){
             while(winner == null){
@@ -189,12 +243,20 @@ public class PebbleGame {
             }
         }
 
+        /**
+         * method to wrap discarding and drawing pebbles into one synchronized action
+         */
         synchronized private void discardAndDrawPebbles(){
             int freeSpace = rand.nextInt(10);
             discardToBag(freeSpace);
             drawFromBag(freeSpace);
         }
 
+        /**
+         * method to draw from a random bag and place the pebble
+         * drawn into a given slot in the hand array
+         * @param slot
+         */
         private void drawFromBag(int slot){
             boolean drawn = false;
             Bag drawnFrom;
@@ -220,6 +282,11 @@ public class PebbleGame {
             }
         }
 
+        /**
+         * method to discard a pebble in a given slot in the hand
+         * into the corresponding white bag for the black bag the player drew from
+         * @param slot
+         */
         private void discardToBag(int slot){
             Pebble pToDiscard = hand[slot];
             Bag discardTo = null;
@@ -246,6 +313,14 @@ public class PebbleGame {
 
         }
 
+
+        /**
+         * method that returns a string to represent the hand for a player
+         * 
+         * take a hand and outputs a string excluding any null values
+         * @param hand
+         * @return
+         */
         private String handToString(Pebble [] hand){
             String toAppend = "[";
             for(Pebble i : hand){
@@ -257,6 +332,10 @@ public class PebbleGame {
         }
     }
 
+
+    /**
+     * class for bag objects
+     */
     public class Bag {
         
         //in the bag class we will have to make sure that only one player can
@@ -267,6 +346,11 @@ public class PebbleGame {
         int [] weights;
         int index;
 
+        /**
+         * constructor for bag
+         * @param weights - used to construct the pebble objects
+         * @param index - used so that the bag can find its corresponding white bag
+         */
         public Bag(int [] weights, int index){
             this.weights = weights;
             this.index = index;
@@ -282,6 +366,13 @@ public class PebbleGame {
 
         }
 
+        /**
+         * constructor for bag
+         * @param weightFile - a file containing weights that will be converted into an array to construct
+         *                     pebbles with
+         * @param index - used to find the corresponding white bag
+         * @throws Exception
+         */
         public Bag(File weightFile, int index) throws Exception{
             //initialize a new arraylist of stones
 
@@ -290,6 +381,8 @@ public class PebbleGame {
             FileReader fileReader= new FileReader(weightFile);
             BufferedReader reader = new BufferedReader(fileReader);
             
+            //read the file and get the weights
+
             try{
                 String weightString = reader.readLine();
 
@@ -298,7 +391,7 @@ public class PebbleGame {
                 weights = new int[weightStringArr.length];
 
                 for (int i =0; i < weights.length; i++){
-                    weights[i] = Integer.parseInt(weightStringArr[i]);
+                    weights[i] = Integer.parseInt(weightStringArr[i]); //have to parse because they are strings
                     if (weights[i] < 1){
                         throw new Exception("weights must be strictly positive integers");
                     }
@@ -315,6 +408,8 @@ public class PebbleGame {
 
             Random rand = new Random();
 
+            //fill the bag with pebbles
+
             for (int i = 0; i < playerCount * 11; i ++){
                 Pebble newPebble = new Pebble(weights[rand.nextInt(weights.length)]);
                 pebbles.add(newPebble);
@@ -323,11 +418,20 @@ public class PebbleGame {
 
         }
 
+        /**
+         * constructor for an empty bag
+         * used to make white bags
+         * @param index
+         */
         public Bag(int index){
             pebbles = new ArrayList<Pebble>();
             this.index = index;
         }
 
+        /**
+         * returns the character representation for a bag
+         * @return
+         */
         public char getChar(){
             char returnChar;
             switch(index){
@@ -356,6 +460,12 @@ public class PebbleGame {
             return returnChar;
         }
 
+        /**
+         * method used to take a random pebble from the bag
+         * 
+         * methods returns the pebble taken and then removes it from the list of pebbles
+         * @return
+         */
         public synchronized Pebble takePebble(){
             if (pebbles.isEmpty()){
                 bags[index + 3].transferPebbles(this);
@@ -368,23 +478,45 @@ public class PebbleGame {
 
         }
 
+        /**
+         * method to add a single pebble to the bag
+         * @param pebble
+         */
         public synchronized void addPebble(Pebble pebble){
             pebbles.add(pebble);
         }
 
+        /**
+         * method to transfer contents of a bag to a given bag
+         * 
+         * used to move all pebbles from a white bag to a black bag
+         * @param bag
+         */
         public synchronized void transferPebbles(Bag bag){
             bag.fill(pebbles);
             pebbles = new ArrayList<Pebble>();
         }
 
+        /**
+         * method to fill a bag with all the pebbles given in an arrayList
+         * @param pebbles
+         */
         private synchronized void fill(ArrayList<Pebble> pebbles){
-            this.pebbles = pebbles;
+            this.pebbles.addAll(pebbles);
         }
     }
 
+
+    /**
+     * class for pebble
+     */
     class Pebble {
         final int value;
 
+        /**
+         * constructor sets the weight of a pebble
+         * @param value
+         */
         public Pebble(int value){
             this.value = value;
         }
@@ -393,6 +525,11 @@ public class PebbleGame {
             return value;
         }
 
+        /**
+         * evaluates that the pebbles are of equal weight
+         * @param p
+         * @return
+         */
         public boolean equals(Pebble p) {
             if (this.value == p.getValue()) {return true;}
             return false;
