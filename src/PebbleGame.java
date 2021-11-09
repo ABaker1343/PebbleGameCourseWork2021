@@ -175,7 +175,7 @@ public class PebbleGame {
             while(winner == null){
                 System.out.println(index);
                 if(hasWon()) {
-                    if (winner == null) { winner = this; }
+                    synchronized(this) { if (winner == null) { winner = this; } }
                     break;
                 }
 
